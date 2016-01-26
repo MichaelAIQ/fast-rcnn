@@ -195,6 +195,13 @@ class pascal_voc(datasets.imdb):
         """
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         # print 'Loading: {}'.format(filename)
+
+        # http://stackoverflow.com/questions/1596829/xml-parsing-with-python-and-minidom
+        def getChildrenByTagName(node, tagName):
+            for child in node.childNodes:
+                if child.nodeType == child.ELEMENT_NODE and (tagName == '*' or child.tagName == tagName):
+                    return child
+
         def get_data_from_tag(node, tag):
             return node.getElementsByTagName(tag)[0].childNodes[0].data
 
@@ -210,11 +217,12 @@ class pascal_voc(datasets.imdb):
 
         # Load object bounding boxes into a data frame.
         for ix, obj in enumerate(objs):
+            bndbox_in_obj = getChildrenByTagName(obj, 'bndbox')
             # Make pixel indexes 0-based
-            x1 = float(get_data_from_tag(obj, 'xmin')) - 1
-            y1 = float(get_data_from_tag(obj, 'ymin')) - 1
-            x2 = float(get_data_from_tag(obj, 'xmax')) - 1
-            y2 = float(get_data_from_tag(obj, 'ymax')) - 1
+            x1 = float(get_data_from_tag(bndbox_in_obj, 'xmin')) - 1
+            y1 = float(get_data_from_tag(bndbox_in_obj, 'ymin')) - 1
+            x2 = float(get_data_from_tag(bndbox_in_obj, 'xmax')) - 1
+            y2 = float(get_data_from_tag(bndbox_in_obj, 'ymax')) - 1
             cls = self._class_to_ind[
                     str(get_data_from_tag(obj, "name")).lower().strip()]
             boxes[ix, :] = [x1, y1, x2, y2]
